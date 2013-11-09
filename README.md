@@ -1,6 +1,6 @@
 BroadNibBackground
 ==================
 
-RoboFont extension that draws a broad nib contrast in the background of the glyph window.
+RoboFont extension that draws a broad nib contrast from the background layer.
 
 ![Preview](preview.png "Preview")
