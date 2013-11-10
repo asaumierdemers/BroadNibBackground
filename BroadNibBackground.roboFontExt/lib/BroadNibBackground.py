@@ -99,22 +99,22 @@ class BroadNibBackground(BaseWindowController):
         
         
         stepValue = getExtensionDefault("%s.%s" %(BroadNibBackgroundDefaultKey, "step"), 20)
-        self.w.step = SliderGroup((x, y, w, h), "Steps :", 0, 60, stepValue, callback=self.stepChanged)
+        self.w.step = SliderGroup((x, y, w, h), "Steps:", 0, 60, stepValue, callback=self.stepChanged)
         
         y+=h
         
         widthValue = getExtensionDefault("%s.%s" %(BroadNibBackgroundDefaultKey, "width"), 50)        
-        self.w.width = SliderGroup((x, y, w, h), "Width :", 0, 200, widthValue, callback=self.widthChanged)
+        self.w.width = SliderGroup((x, y, w, h), "Width:", 0, 300, widthValue, callback=self.widthChanged)
         
         y+=h
         
         heightValue = getExtensionDefault("%s.%s" %(BroadNibBackgroundDefaultKey, "height"), 10)
-        self.w.height = SliderGroup((x, y, w, h), "Height :", 0, 100, heightValue, callback=self.heightChanged)
+        self.w.height = SliderGroup((x, y, w, h), "Height:", 0, 300, heightValue, callback=self.heightChanged)
         
         y+=h
         
         angleValue = getExtensionDefault("%s.%s" %(BroadNibBackgroundDefaultKey, "angle"), 30)
-        self.w.angle = SliderGroup((x, y, w, h), "Angle :", 0, 360, angleValue, callback=self.angleChanged)
+        self.w.angle = SliderGroup((x, y, w, h), "Angle:", 0, 360, angleValue, callback=self.angleChanged)
         self.w.angle.slider.getNSSlider().cell().setSliderType_(NSCircularSlider)
         self.w.angle.text.setPosSize((0, 15, -0, 20))
         self.w.angle.slider.setPosSize((60, 10, 30, 30))
@@ -123,7 +123,7 @@ class BroadNibBackground(BaseWindowController):
         y+=h + 20
                 
         shapeValue = getExtensionDefault("%s.%s" %(BroadNibBackgroundDefaultKey, "shape"), 0)
-        self.w.shapetext = TextBox((x, y, -0, 20), "Shape :")
+        self.w.shapetext = TextBox((x, y, -0, 20), "Shape:")
         self.w.shape = RadioGroup((74, y, -0, 20), ["oval", "rect"], isVertical=False, callback=self.shapeChanged)
         self.w.shape.set(shapeValue)
         
@@ -131,11 +131,12 @@ class BroadNibBackground(BaseWindowController):
                 
         color = NSColor.colorWithCalibratedRed_green_blue_alpha_(1, 0, 0, .5)
         colorValue = getExtensionDefaultColor("%s.%s" %(BroadNibBackgroundDefaultKey, "color"), color)
-        self.w.colortext = TextBox((x, y, -0, 20), "Color :")
+        self.w.colortext = TextBox((x, y, -0, 20), "Color:")
         self.w.color = ColorWell((70, y-5, w, 30), callback=self.colorChanged, color=colorValue)
         
-        y+=h
+        y+=h + 20
         
+        self.w.layertext = TextBox((x, y-20, -0, 20), "Layer:")
         self.w.layer = List((x, y, w, lh), layers, allowsMultipleSelection=False, selectionCallback=self.layerChanged)
         
         y+=lh+15
@@ -207,7 +208,7 @@ class BroadNibBackground(BaseWindowController):
                     startingPoint = contour.segments[0][0]
                 else: # get last point
                     startingPoint = contour.segments[-1][-1]
-            
+                
                 for segment in contour.segments:
 
                     if segment.type == "curve":
@@ -217,8 +218,9 @@ class BroadNibBackground(BaseWindowController):
                         p2 = (segment[1].x, segment[1].y)
                         p3 = (segment[2].x, segment[2].y)
                     
-                        points = getPointsOnCurve(step, p0, p1, p2, p3)   
-                                         
+                        points = getPointsOnCurve(step, p0, p1, p2, p3)
+                        
+                        self.pointList.append((startingPoint.x, startingPoint.y))                 
                         # set next starting point
                         startingPoint = segment[2]
                     
@@ -229,6 +231,7 @@ class BroadNibBackground(BaseWindowController):
                     
                         points = getPointsOnLine(step, p0, p1)
                         
+                        self.pointList.append((startingPoint.x, startingPoint.y))
                         # set next starting point
                         startingPoint = segment[0]
                     
