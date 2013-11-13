@@ -1,5 +1,6 @@
 from AppKit import NSCircularSlider, NSColor, NSRegularControlSize
 from defconAppKit.windows.baseWindow import BaseWindowController
+from fontTools.pens.basePen import BasePen
 from mojo.extensions import getExtensionDefault, setExtensionDefault, getExtensionDefaultColor, setExtensionDefaultColor
 from mojo.events import addObserver, removeObserver
 from mojo.UI import UpdateCurrentGlyphView
@@ -8,7 +9,7 @@ from vanilla import *
 
 def getPointsOnCurve(n, (x0, y0), (x1, y1), (x2, y2), (x3, y3)):
     
-    points = []
+    points = [(x0, y0)]
     
     for t in range(1, n):
         t = t/n
@@ -32,7 +33,7 @@ def getPointsOnCurve(n, (x0, y0), (x1, y1), (x2, y2), (x3, y3)):
 
 def getPointsOnLine(n, (x0, y0), (x1, y1)):
     
-    points = []
+    points = [(x0, y0)]
     
     for t in range(1, n):
         t = t/n
@@ -43,7 +44,46 @@ def getPointsOnLine(n, (x0, y0), (x1, y1)):
         points.append((fx, fy))
     
     return points
+
+class BroadNibPen(BasePen):
     
+    def __init__(self, glyphSet, step, width, height, angle, shape):
+        BasePen.__init__(self, glyphSet)
+        self.step = step
+        self.width = width
+        self.height = height
+        self.angle = angle
+        self.shape = shape
+        self.firstPoint = None
+
+    def _moveTo(self, pt):
+        self.firstPoint = pt
+    def _lineTo(self, pt):
+        pt0 = self._getCurrentPoint()
+        points = getPointsOnLine(self.step, pt0, pt)
+        self._drawPoints(points)
+    def _curveToOne(self, pt1, pt2, pt3):
+        pt0 = self._getCurrentPoint()
+        points = getPointsOnCurve(self.step, pt0, pt1, pt2, pt3)
+        self._drawPoints(points)
+    
+    def _closePath(self):
+        pt0 = self._getCurrentPoint()
+        pt = self.firstPoint
+        if pt0 != pt:
+            points = getPointsOnLine(self.step, pt0, pt)
+            self._drawPoints(points)
+        
+    def _drawPoints(self, points):
+        for point in points:
+            x, y = point
+            save()
+            translate(x, y)
+            rotate(self.angle)
+            translate(-self.width/2, -self.height/2)
+            self.shape(0, 0, self.width, self.height)
+            restore()
+        
 
 class SliderGroup(Group):
     def __init__(self, posSize, text, minValue, maxValue, value, callback):
@@ -93,7 +133,7 @@ class BroadNibBackground(BaseWindowController):
         lh = len(layers)*20+20
         
         self.layerName = layers[0]
-        self.pointList = []
+        self.currentPen = None
                 
         self.w = FloatingWindow((200, 330), "Broad Nib Background")
         
@@ -192,51 +232,9 @@ class BroadNibBackground(BaseWindowController):
     
     def drawBroadNibBackground(self, info):
         
-        g = info["glyph"].getLayer(self.layerName)
-        
-        # update the point list only if drawing on the selected layer
-        if info["glyph"].layerName == self.layerName:
+        glyph = info["glyph"].getLayer(self.layerName)
                         
-            self.pointList = []
-        
-            step = int(self.w.step.slider.get())
-                
-            for contour in g.contours:
-            
-                # if path is open get first point
-                if contour.segments[0].type == "move":
-                    startingPoint = contour.segments[0][0]
-                else: # get last point
-                    startingPoint = contour.segments[-1][-1]
-                
-                for segment in contour.segments:
-
-                    if segment.type == "curve":
-                    
-                        p0 = (startingPoint.x, startingPoint.y)
-                        p1 = (segment[0].x, segment[0].y)
-                        p2 = (segment[1].x, segment[1].y)
-                        p3 = (segment[2].x, segment[2].y)
-                    
-                        points = getPointsOnCurve(step, p0, p1, p2, p3)
-                        
-                        self.pointList.append((startingPoint.x, startingPoint.y))                 
-                        # set next starting point
-                        startingPoint = segment[2]
-                    
-                    else: # line
-                
-                        p0 = (startingPoint.x, startingPoint.y)
-                        p1 = (segment[0].x, segment[0].y)
-                    
-                        points = getPointsOnLine(step, p0, p1)
-                        
-                        self.pointList.append((startingPoint.x, startingPoint.y))
-                        # set next starting point
-                        startingPoint = segment[0]
-                    
-                    self.pointList.extend(points)
-                
+        step = int(self.w.step.slider.get())
         width = int(self.w.width.slider.get())
         height = int(self.w.height.slider.get())
         angle = int(self.w.angle.slider.get())
@@ -248,15 +246,12 @@ class BroadNibBackground(BaseWindowController):
         
         r,g,b,a = self.getColor()
         fill(r,g,b,a)
-                 
-        for point in self.pointList:
-            x, y = point
-            save()
-            translate(x, y)
-            rotate(angle)
-            translate(-width/2, -height/2)
-            shape(0, 0, width, height)
-            restore()
+        
+        if info["glyph"].layerName == self.layerName or not self.currentPen:
+            self.currentPen = BroadNibPen(None, step, width, height, angle, shape)
+            
+        glyph.draw(self.currentPen)
+             
         
         
 BroadNibBackground()
