@@ -29,5 +29,9 @@
 	<real>1384037563</real>
 	<key>version</key>
 	<string>1.0</string>
+	<key>repository</key>
+	<string>asaumierdemers/BroadNibBackground</string>
+	<key>extensionPath</key>
+	<string>BroadNibBackground.roboFontExt</string>
 </dict>
 </plist> 
