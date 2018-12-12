@@ -26,12 +26,12 @@
 	<key>name</key>
 	<string>Broad Nib Background</string>
 	<key>timeStamp</key>
-	<real>1384037563</real>
+	<real>1544611292.9437308</real>
 	<key>version</key>
-	<string>1.0</string>
+	<string>1.1</string>
 	<key>repository</key>
 	<string>asaumierdemers/BroadNibBackground</string>
 	<key>extensionPath</key>
 	<string>BroadNibBackground.roboFontExt</string>
 </dict>
-</plist> 
+</plist>
